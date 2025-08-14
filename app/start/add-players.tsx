@@ -1,44 +1,86 @@
-import { useState } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+// app/start/add-players.tsx
+import React, { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Pressable,
+  Keyboard,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useRoundDraft } from "@/store/useRoundDraft";
-// import * as Crypto from "expo-crypto";
 import { v4 as uuidv4 } from "uuid";
 
 export default function AddPlayers() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { players, addPlayer, removePlayer, course } = useRoundDraft();
   const [name, setName] = useState("");
-  const { players, addPlayer, removePlayer } = useRoundDraft();
+
+  const onAdd = useCallback(() => {
+    const n = name.trim();
+    if (!n) return;
+    // optional: prevent duplicates (case-insensitive)
+    if (players.some((p) => p.name.toLowerCase() === n.toLowerCase())) {
+      setName("");
+      return;
+    }
+    addPlayer({ id: uuidv4(), name: n });
+    setName("");
+    Keyboard.dismiss();
+  }, [name, players, addPlayer]);
+
+  const onContinue = useCallback(() => {
+    if (players.length === 0) return; // guarded by disabled state
+    if (course?.id) router.push("/start/confirm");
+    else router.push("/start/course");
+  }, [players.length, course?.id, router]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Players</Text>
-      <Input placeholder="Player name" value={name} onChangeText={setName} />
-      <View style={styles.addButton}>
-        <Button
-          onPress={() => {
-            if (name.trim()) {
-              // addPlayer({ id: Crypto.randomUUID(), name: name.trim() });
-              addPlayer({ id: uuidv4(), name: name.trim() });
+      <Text style={styles.header}>Add Players</Text>
 
-              setName("");
-            }
-          }}
-        >
-          Add Player
-        </Button>
+      <Input
+        placeholder="Player name"
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+        autoCorrect={false}
+        returnKeyType="done"
+        onSubmitEditing={onAdd}
+      />
+      <View style={styles.inlineBtns}>
+        <Button onPress={onAdd}>Add</Button>
       </View>
 
       <FlatList
+        contentContainerStyle={{
+          paddingTop: 8,
+          paddingBottom: (insets.bottom || 16) + 88,
+        }}
         data={players}
-        keyExtractor={(p) => p.id}
+        keyExtractor={(p) => String(p.id)}
         renderItem={({ item }) => (
-          <View style={styles.playerItem}>
+          <View style={styles.row}>
             <Text style={styles.playerName}>{item.name}</Text>
-            <Button onPress={() => removePlayer(item.id)}>Remove</Button>
+            <Pressable onPress={() => removePlayer(item.id)}>
+              <Text style={styles.remove}>Remove</Text>
+            </Pressable>
           </View>
         )}
+        ListEmptyComponent={<Text style={styles.empty}>No players yet.</Text>}
+        keyboardShouldPersistTaps="handled"
       />
+
+      <View style={[styles.footer, { bottom: insets.bottom || 16 }]}>
+        <Button disabled={players.length === 0} onPress={onContinue}>
+          Continue
+        </Button>
+      </View>
     </View>
   );
 }
@@ -48,25 +90,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F7F7F7",
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingTop: 16,
   },
   header: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#222222",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 12,
   },
-  addButton: { marginTop: 12, marginBottom: 16 },
-  playerItem: {
-    backgroundColor: "white",
+  inlineBtns: { marginTop: 10, marginBottom: 16, width: "100%" },
+  row: {
+    backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    padding: 14,
+    marginBottom: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  playerName: { color: "#222222" },
+  playerName: { color: "#111827", fontWeight: "500" },
+  remove: { color: "#DC2626", fontWeight: "600" },
+  empty: { color: "#6B7280", marginTop: 12 },
+  footer: { position: "absolute", left: 24, right: 24 },
 });
