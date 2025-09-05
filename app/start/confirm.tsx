@@ -1,11 +1,16 @@
+// app/start/confirm.tsx
 import React, { useCallback, useState } from "react";
 import { View, Text, Alert, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/Button";
 import { useRoundDraft } from "@/store/useRoundDraft";
-import { api } from "@/lib/api/client";
 import { kvSet } from "@/lib/db/sqlite";
+import {
+  createRound,
+  addPlayersToRound,
+  assignCourseToRound,
+} from "@/lib/api/rounds";
 
 export default function ConfirmRound() {
   const insets = useSafeAreaInsets();
@@ -19,29 +24,30 @@ export default function ConfirmRound() {
     if (!draft.course?.id) return Alert.alert("Select a course first.");
     if (draft.players.length === 0)
       return Alert.alert("Add at least one player.");
+
     setSubmitting(true);
     try {
-      // 1) create empty round
-      const { data: round } = await api.post("/rounds", {}); // adjust body if your backend needs fields
+      // 1) Create round
+      const round = await createRound(); // ✅ returns payload directly
       const roundId = String(round.id);
 
-      // 2) add players
-      for (const p of draft.players) {
-        await api.post(`/rounds/${roundId}/players`, { name: p.name });
-      }
+      // 2) Add players (bulk, with single-add fallback handled in helper)
+      const playersPayload = draft.players.map((p) => ({ name: p.name }));
+      await addPlayersToRound(roundId, playersPayload);
 
-      // 3) assign course
-      await api.post(`/courses/assign/${roundId}/${draft.course.id}`);
+      // 3) Assign course
+      await assignCourseToRound(roundId, draft.course.id);
 
-      // 4) persist + navigate
+      // 4) Persist + navigate
       await kvSet("lastRoundId", roundId);
       draft.reset();
       router.replace(`/round/${roundId}`);
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.detail ??
-        e?.message ??
-        "Could not create the round.";
+      // Pinpoint which call failed by printing server response
+      const status = e?.response?.status;
+      const data = e?.response?.data;
+      const msg = data?.detail ?? e?.message ?? "Could not create the round.";
+      console.log("confirm.onCreate error", { status, data });
       Alert.alert("Error", String(msg));
     } finally {
       setSubmitting(false);
