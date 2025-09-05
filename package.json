@@ -29,7 +29,8 @@
     "react-native-svg": "15.11.2",
     "uuid": "^11.1.0",
     "zod": "^4.0.16",
-    "zustand": "^5.0.7"
+    "zustand": "^5.0.7",
+    "react-native-screens": "~4.11.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

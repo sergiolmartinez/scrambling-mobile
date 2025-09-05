@@ -1,4 +1,4 @@
-package com.anonymous.scrambling
+package com.yourcompany.scrambling
 
 import android.os.Build
 import android.os.Bundle

@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.scrambling'
+    namespace 'com.yourcompany.scrambling'
     defaultConfig {
-        applicationId 'com.anonymous.scrambling'
+        applicationId 'com.yourcompany.scrambling'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

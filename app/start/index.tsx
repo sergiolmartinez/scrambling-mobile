@@ -15,6 +15,9 @@ export default function StartHub() {
         <Link href="/start/course" asChild>
           <Button>Find a Course</Button>
         </Link>
+        <Link href="/start/confirm" asChild>
+          <Button>Review & Create</Button>
+        </Link>
       </View>
     </View>
   );

@@ -14,7 +14,7 @@ export default function StartLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="course" options={{ title: "Select Course" }} />
       <Stack.Screen name="add-players" options={{ title: "Add Players" }} />
-      {/* add "confirm" later */}
+      <Stack.Screen name="confirm" options={{ title: "Review & Create" }} />
     </Stack>
   );
 }
